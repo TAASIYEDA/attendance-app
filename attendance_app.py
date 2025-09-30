@@ -8,7 +8,6 @@ from io import BytesIO
 # ==== [SYSTEM_CONFIG & CONSTANTS] ====
 # ==================================================
 
-# קבצי הנתונים לאחסון (כמו LocalStorage)
 USERS_FILE = "users_data.xlsx"
 RECORDS_FILE = "records_data.xlsx"
 
@@ -17,7 +16,6 @@ PROGRAMS = ['ביומימיקרי','בינה מלאכותית','רוקחים ע�
 MUNICIPALITIES = ['אופקים','אשדוד','אשכול','אשקלון','באר יעקב','באר שבע','חדרה','חיפה','יבנה','לכיש','מ.א חוף אשקלון','מודיעין','מטה יהודה','מסעדה','נהריה','נתניה','עין אלאסד','עין קניא (רשות)','עכו','עמק הירדן','צפון + דרום','קריית גת','ראשון לציון','רחובות','רמלה','שדות דן','שדרות','שפיר','יד בנימין','הרצליה','קריית שמונה','בנימינה','נצרת','עפולה','בית שאן','ירוחם','אחר, לציין בהערות.']
 ACTIVITY_TYPES = ['הכשרה','קורסים','סדנאות','סיורים','ביטול זמן']
 
-# משתמשי ברירת מחדל (כמו במקור ה-JS)
 DEFAULT_USERS = [
     {'id': 'u1', 'name': 'עידן נחום', 'empNumber': '8500', 'pin': '2311', 'role': 'admin'},
     {'id': 'u2', 'name': 'מנהל', 'empNumber': '8501', 'pin': '2025', 'role': 'manager'},
@@ -35,32 +33,42 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# הזרקת CSS לעיצוב טכנולוגי (Neo-Grid/Cyberpunk)
+# הזרקת CSS לעיצוב טכנולוגי קומפקטי (Neo-Grid/Cyberpunk)
 st.markdown("""
 <style>
-/* 1. רקע: כהה מאוד עם אפקט Matrix עדין */
-body {
-    background: #000000; /* שחור מוחלט */
-    font-family: 'Consolas', 'Courier New', monospace; /* פונט טכנולוגי */
-    direction: rtl;
-    color: #00ff7f; /* ירוק בהיר - צבע Matrix */
+/* צבעים גלובליים */
+:root {
+    --bg: #000000;
+    --neo-cyan: #00ffff;
+    --neo-green: #00ff7f;
 }
 
-/* 2. כותרות: זוהר ניאון כחול */
+/* רקע ופונט */
+body {
+    background: var(--bg);
+    font-family: 'Consolas', 'Courier New', monospace;
+    direction: rtl;
+    color: var(--neo-green);
+}
+
+/* כותרות */
 h1, h2, h3 {
     text-align: center;
-    color: #00ffff; /* ציאן/כחול ניאון */
+    color: var(--neo-cyan);
     font-weight: bold;
-    text-shadow: 0 0 10px rgba(0, 255, 255, 0.7); /* אפקט זוהר */
+    text-shadow: 0 0 10px rgba(0, 255, 255, 0.7);
 }
-/* כותרות משנה קטנות יותר */
-.stTabs [data-testid="stCustomWrapper"] h3 {
+.tab-content h3 { /* כותרות בתוך הטאבים */
     text-align: right;
-    color: #00ff7f;
+    color: var(--neo-green);
     text-shadow: none;
+    font-size: 1.25em;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px dashed rgba(0, 255, 127, 0.3);
 }
 
-/* 3. כרטיסים (בשימוש ללוגין ולטפסים) */
+/* לוגין קארד */
 .login-card {
     max-width: 450px;
     margin: 80px auto 40px;
@@ -69,73 +77,72 @@ h1, h2, h3 {
     border-radius: 5px;
     box-shadow: 0 0 25px rgba(0, 255, 255, 0.6), 0 0 5px rgba(0, 255, 255, 0.4);
     text-align: center;
-    backdrop-filter: blur(4px);
-    border: 1px solid #00ffff;
+    border: 1px solid var(--neo-cyan);
 }
 
-/* 4. שדות קלט (TextField, SelectBox) */
+/* טאב בר (כפתורי ניווט) */
+.tab-bar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+.tab-button {
+    padding: 8px 15px;
+    border-radius: 5px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
+    border: 1px solid var(--neo-green);
+    background: #1a1a1a;
+    color: var(--neo-green);
+    box-shadow: 0 0 5px rgba(0, 255, 127, 0.5);
+}
+.tab-button.active {
+    background: var(--neo-cyan);
+    color: #000000;
+    border-color: var(--neo-cyan);
+    box-shadow: 0 0 10px var(--neo-cyan);
+}
+.stButton button { /* איפוס כפתורי הטאבים כדי שלא ייראו כפתורים רגילים */
+    padding: 0;
+    background: none;
+    border: none;
+    box-shadow: none;
+    color: inherit;
+    font-size: 1em;
+}
+
+/* קומפקטיות של שדות קלט */
+div[data-testid="stForm"] > div {
+    padding: 0; /* מוריד ריפודים פנימיים בטופס */
+}
+div[data-testid="column"] {
+    padding: 0 8px !important; /* ריווח קטן יותר בין עמודות */
+}
+
+/* שדות קלט */
 div[data-testid="stTextInput"] input, 
 div[data-testid="stDateInput"] input,
 div[data-testid="stTimeInput"] input,
 div[data-testid="stNumberInput"] input,
 div[data-testid="stSelectbox"] div[role="combobox"] {
     font-size: 1.0em !important;
-    border-radius: 0 !important; /* קווים ישרים */
+    border-radius: 0 !important;
     padding: 0.6em !important;
     background-color: #000000 !important;
-    border: 1px solid #00ff7f !important; /* ירוק זוהר */
-    color: #00ff7f !important;
-    box-shadow: 0 0 5px #00ff7f !important;
+    border: 1px solid var(--neo-green) !important;
+    color: var(--neo-green) !important;
+    box-shadow: 0 0 2px var(--neo-green) !important;
 }
 
-/* 5. כפתור ראשי */
-.stButton>button {
-    padding: 0.8em 1.5em;
-    border-radius: 5px;
-    border: 2px solid #00ffff;
-    background: linear-gradient(90deg, #00ffff, #007bff); /* ציאן-כחול */
-    color: #000000;
-    font-weight: bold;
-    font-size: 1.1em;
-    transition: 0.2s ease;
-    cursor: pointer;
-    box-shadow: 0 0 10px #00ffff;
-}
-.stButton>button:hover {
-    transform: translateY(-1px);
-    background: linear-gradient(90deg, #007bff, #00ffff);
-    box-shadow: 0 0 20px #00ffff, 0 0 5px #00ffff; /* זוהר משופר */
-}
-
-/* 6. כפתורים משניים (Secondary) */
-.stButton:has(button[kind="secondary"]) button {
-    background: #1a1a1a;
-    color: #00ff7f;
-    border: 1px solid #00ff7f;
-    box-shadow: 0 0 5px #00ff7f;
-}
-
-/* 7. דאטה פריים (טבלה) - מראה מסוף נתונים */
-.dataframe {
-    background-color: #000000;
-    color: #00ff7f;
-    font-family: 'Consolas', monospace;
-    border: 1px solid #00ffff;
-    box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
-}
+/* דאטה פריים */
 .stDataFrame {
-    direction: ltr !important; /* יישור נתונים למרכז/שמאל בטבלה */
+    direction: ltr !important;
+    border: 1px solid var(--neo-cyan);
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+    margin-top: 15px;
 }
-
-/* 8. התראות (Warnings/Success) */
-.stAlert {
-    border-radius: 5px;
-    font-weight: bold;
-    font-family: 'Consolas', monospace;
-}
-.stSuccess { background-color: rgba(0, 255, 127, 0.1) !important; color: #00ff7f !important; border: 1px solid #00ff7f !important;} /* ירוק Matrix */
-.stError { background-color: rgba(255, 0, 0, 0.1) !important; color: #ff3333 !important; border: 1px solid #ff3333 !important;} /* אדום אזהרה */
-.stWarning { background-color: rgba(255, 165, 0, 0.1) !important; color: #ffa500 !important; border: 1px solid #ffa500 !important;} /* כתום אזהרה */
 </style>
 """, unsafe_allow_html=True)
 
@@ -146,13 +153,11 @@ div[data-testid="stSelectbox"] div[role="combobox"] {
 
 def calc_hours(start_time, end_time):
     """מחשב הפרש שעות בין שני אובייקטי datetime.time ומחזיר מחרוזת HH:MM."""
-    if not start_time or not end_time:
-        return ""
+    if not start_time or not end_time: return ""
     try:
         start_dt = datetime.combine(datetime.min.date(), start_time)
         end_dt = datetime.combine(datetime.min.date(), end_time)
-        if end_dt < start_dt:
-            end_dt = end_dt.replace(day=end_dt.day + 1)
+        if end_dt < start_dt: end_dt = end_dt.replace(day=end_dt.day + 1)
         
         diff = end_dt - start_dt
         total_minutes = int(diff.total_seconds() / 60)
@@ -164,20 +169,26 @@ def calc_hours(start_time, end_time):
         return ""
 
 def init_data():
-    """טוען או יוצר את קבצי הנתונים."""
-    if 'users_df' not in st.session_state:
-        if os.path.exists(USERS_FILE):
-            st.session_state.users_df = pd.read_excel(USERS_FILE, dtype={'empNumber': str, 'pin': str})
-        else:
-            st.session_state.users_df = pd.DataFrame(DEFAULT_USERS)
-            save_data(st.session_state.users_df, USERS_FILE)
+    """טוען או יוצר את קבצי הנתונים ומאתחל את מצב ה-session."""
+    # משתמשי ברירת מחדל
+    if not os.path.exists(USERS_FILE):
+        pd.DataFrame(DEFAULT_USERS).to_excel(USERS_FILE, index=False)
+    # נתוני נוכחות
+    if not os.path.exists(RECORDS_FILE):
+        pd.DataFrame(columns=['id', 'empNumber', 'empName', 'date', 'start', 'end', 'hours', 'type', 'municipality', 'location', 'program', 'meetingNumber', 'km', 'notes']).to_excel(RECORDS_FILE, index=False)
 
+    # טעינת DataFrame-ים למצב session
+    if 'users_df' not in st.session_state:
+        st.session_state.users_df = pd.read_excel(USERS_FILE, dtype={'empNumber': str, 'pin': str})
     if 'records_df' not in st.session_state:
-        if os.path.exists(RECORDS_FILE):
-            st.session_state.records_df = pd.read_excel(RECORDS_FILE, dtype={'empNumber': str, 'meetingNumber': 'Int64'})
-        else:
-            st.session_state.records_df = pd.DataFrame(columns=['id', 'empNumber', 'empName', 'date', 'start', 'end', 'hours', 'type', 'municipality', 'location', 'program', 'meetingNumber', 'km', 'notes'])
-            save_data(st.session_state.records_df, RECORDS_FILE)
+        st.session_state.records_df = pd.read_excel(RECORDS_FILE, dtype={'empNumber': str, 'meetingNumber': 'Int64'})
+        
+    # מצב כניסה וטאב נוכחי
+    if 'logged_in' not in st.session_state:
+        st.session_state.logged_in = False
+    if 'current_tab' not in st.session_state:
+        st.session_state.current_tab = 'form'
+
 
 def save_data(df, filename):
     """שומר DataFrame לקובץ Excel."""
@@ -185,11 +196,6 @@ def save_data(df, filename):
         df.to_excel(filename, index=False)
     except Exception as e:
         st.error(f"שגיאה בשמירת קובץ הנתונים {filename}: {e}")
-
-def get_emp_name(emp_number):
-    """מחזיר שם עובד לפי מספר עובד."""
-    user = st.session_state.users_df[st.session_state.users_df['empNumber'] == emp_number]
-    return user.iloc[0]['name'] if not user.empty else "שם לא ידוע"
 
 def get_filtered_records(df, filters):
     """מחיל מסננים על טבלת הרשומות."""
@@ -208,20 +214,11 @@ def get_filtered_records(df, filters):
     if filters.get('to_date'):
         filtered_df = filtered_df[filtered_df['date'] <= filters['to_date']]
     
-    # 4. סינון לפי סוג
-    if filters.get('type') and filters['type'] != 'הכל':
-        filtered_df = filtered_df[filtered_df['type'] == filters['type']]
-    
-    # 5. סינון לפי רשות
-    if filters.get('municipality') and filters['municipality'] != 'הכל':
-        filtered_df = filtered_df[filtered_df['municipality'] == filters['municipality']]
+    # 4. סינון לפי סוג, רשות, תוכנית
+    for key in ['type', 'municipality', 'program']:
+        if filters.get(key) and filters[key] != 'הכל':
+            filtered_df = filtered_df[filtered_df[key].fillna('') == filters[key]]
 
-    # 6. סינון לפי תוכנית
-    if filters.get('program') and filters['program'] != 'הכל':
-        # רשומות ללא תוכנית נחשבות ריקות
-        filtered_df = filtered_df[filtered_df['program'].fillna('') == filters['program']]
-
-    # מיון: החדשים למעלה (כמו במקור ה-JS)
     filtered_df = filtered_df.sort_values(by=['date', 'start'], ascending=False)
     return filtered_df.reset_index(drop=True)
 
@@ -230,13 +227,16 @@ def get_filtered_records(df, filters):
 # ==================================================
 
 def login_view():
-    """ממשק כניסה למערכת."""
+    """ממשק כניסה קומפקטי."""
     st.markdown('<div class="login-card">', unsafe_allow_html=True)
     st.markdown("<h2>כניסה למערכת: אימות ($ACCESS$)</h2>", unsafe_allow_html=True)
 
     with st.form("login_form"):
-        emp_number = st.text_input("מס׳ עובד (4 ספרות)", max_chars=4)
-        pin = st.text_input("קוד PIN", type="password", max_chars=4)
+        col1, col2 = st.columns(2)
+        with col1:
+            emp_number = st.text_input("מס׳ עובד (4 ספרות)", max_chars=4, key='login_emp')
+        with col2:
+            pin = st.text_input("קוד PIN", type="password", max_chars=4, key='login_pin')
         
         submitted = st.form_submit_button("אימות וגישה ($COMMIT$)", use_container_width=True)
 
@@ -257,99 +257,98 @@ def login_view():
     st.markdown('</div>', unsafe_allow_html=True)
 
 def logout():
-    """מנתק את המשתמש ומנקה את ה-session state."""
+    """מנתק את המשתמש."""
     st.session_state.logged_in = False
     st.session_state.emp_number = None
     st.session_state.user_name = None
     st.session_state.user_role = None
-    st.session_state.current_tab = 'form'
-    st.success("ניתוק בוצע בהצלחה.")
     st.rerun()
 
 def main_app_view():
-    """ממשק האפליקציה הראשי (לאחר כניסה)."""
+    """ממשק האפליקציה הראשי עם Tab Bar מותאם."""
     
-    # הצגת כותרת ואזור משתמש
-    col_title, col_user = st.columns([4, 1])
+    # --- Header & User Info ---
+    col_title, col_user, col_logout = st.columns([5, 2, 1])
     with col_title:
         st.markdown("<h1>📋 מערכת נוכחות תעשיידע</h1>", unsafe_allow_html=True)
     with col_user:
         role_label = ROLES.get(st.session_state.user_role, 'אורח')
         st.markdown(f"""
             <div style="text-align: left; margin-top: 15px;">
-                <div style="color:#00ffff; font-weight:bold;">{st.session_state.user_name}</div>
-                <div style="color:#00ff7f; font-size:0.9em;">{role_label} • {st.session_state.emp_number}</div>
-                <button onclick="window.parent.document.getElementById('logoutBtn').click();" style="
-                    background: #991b1b; color: white; border: none; padding: 4px 8px; 
-                    border-radius: 4px; font-size: 0.8em; margin-top: 5px; cursor: pointer;">
-                    ניתוק ($LOGOUT$)
-                </button>
+                <div style="color:var(--neo-cyan); font-weight:bold;">{st.session_state.user_name}</div>
+                <div style="color:var(--neo-green); font-size:0.9em;">{role_label} • {st.session_state.emp_number}</div>
             </div>
             """, unsafe_allow_html=True)
+    with col_logout:
+        st.button("ניתוק ($LOGOUT$)", on_click=logout, key='logout_btn')
 
-    # שימוש ב-st.tabs ליישום ה-Tab Bar המקורי
-    tab_names = ['רישום נוכחות', 'דוחות וטבלה', 'ייצוא נתונים']
+    st.markdown("---")
+
+    # --- Tab Bar (Compact) ---
+    tab_buttons = ['form', 'table', 'export']
+    tab_labels = {'form': 'רישום נוכחות', 'table': 'דוחות וטבלה', 'export': 'ייצוא נתונים'}
+    
     if st.session_state.user_role in ['admin', 'manager']:
-        tab_names.append('ניהול משתמשים')
+        tab_buttons.append('users')
+        tab_labels['users'] = 'ניהול משתמשים'
+
+    cols = st.columns(len(tab_buttons) + 1)
+    for i, tab_key in enumerate(tab_buttons):
+        btn_class = "tab-button active" if st.session_state.current_tab == tab_key else "tab-button"
+        if cols[i].button(tab_labels[tab_key], key=f'tab_{tab_key}'):
+            st.session_state.current_tab = tab_key
+            st.rerun()
+        # הזרקת ה-CSS Class לכפתור
+        cols[i].markdown(f'<style>div[data-testid="stButton"] button[data-testid="stFormSubmitButton-tab_{tab_key}"] {{ {btn_class} }}</style>', unsafe_allow_html=True)
+
+    st.markdown('<div class="tab-content" style="padding-top: 20px;">', unsafe_allow_html=True)
     
-    tabs = st.tabs(tab_names)
-    
-    # ----------------------------------
-    # TAB 1: רישום נוכחות (Form)
-    # ----------------------------------
-    with tabs[0]:
+    # --- Content Rendering ---
+    if st.session_state.current_tab == 'form':
         attendance_form_tab()
-
-    # ----------------------------------
-    # TAB 2: דוחות וטבלה (Table/Grid)
-    # ----------------------------------
-    with tabs[1]:
+    elif st.session_state.current_tab == 'table':
         data_grid_tab()
-
-    # ----------------------------------
-    # TAB 3: ייצוא נתונים (Export)
-    # ----------------------------------
-    with tabs[2]:
+    elif st.session_state.current_tab == 'export':
         export_tab()
-    
-    # ----------------------------------
-    # TAB 4: ניהול משתמשים (Admin Only)
-    # ----------------------------------
-    if st.session_state.user_role in ['admin', 'manager']:
-        with tabs[3]:
-            admin_users_tab()
+    elif st.session_state.current_tab == 'users':
+        admin_users_tab()
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# ==================================================
+# ==== [TAB CONTENT: IMPLEMENTATIONS] ====
+# ==================================================
 
 def attendance_form_tab():
     """טופס רישום נוכחות (Create/Update)."""
     st.subheader("טופס רישום / עדכון פעילות ($DATA\_INPUT$)")
-
-    # משתנים לשמירת נתונים בטופס
-    if 'form_data' not in st.session_state:
-        st.session_state.form_data = {}
     
     # קריאה לפונקציית עדכון שעות אוטומטי
     def update_hours():
-        start = st.session_state.form_data.get('start')
-        end = st.session_state.form_data.get('end')
-        st.session_state.form_data['hours'] = calc_hours(start, end)
+        start = st.session_state.start_time
+        end = st.session_state.end_time
+        st.session_state.hours_calculated = calc_hours(start, end)
+    
+    if 'hours_calculated' not in st.session_state:
+        st.session_state.hours_calculated = calc_hours(datetime.now().time(), datetime.now().time())
     
     with st.form("attendance_form", clear_on_submit=True):
-        st.markdown('<h4 style="color:#00ff7f;">זמן ומשך ($TIMESTAMP$)</h4>', unsafe_allow_html=True)
-        col1, col2, col3, col4, col5 = st.columns([1, 1, 1, 1, 1])
+        st.markdown('<div style="color:#00ff7f; font-weight:bold;">זמן ומשך ($TIMESTAMP$)</div>', unsafe_allow_html=True)
+        col1, col2, col3, col4, col5 = st.columns(5)
         
         with col1:
             date = st.date_input("תאריך", value=datetime.today(), key='date_input')
         with col2:
-            start_time = st.time_input("שעת התחלה", value=datetime.now(), key='start', on_change=update_hours)
+            start_time = st.time_input("שעת התחלה", value=datetime.now().time(), key='start_time', on_change=update_hours)
         with col3:
-            end_time = st.time_input("שעת סיום", value=datetime.now(), key='end', on_change=update_hours)
+            end_time = st.time_input("שעת סיום", value=datetime.now().time(), key='end_time', on_change=update_hours)
         with col4:
-            hours = st.text_input("סה״כ שעות (מחושב)", value=st.session_state.form_data.get('hours', ''), disabled=True)
+            st.text_input("סה״כ שעות (מחושב)", value=st.session_state.hours_calculated, disabled=True)
         with col5:
             meeting_number = st.number_input("מס׳ מפגש", min_value=1, step=1, key='meetingNumber_input', format='%d')
 
         st.markdown("---")
-        st.markdown('<h4 style="color:#00ff7f;">פרטי פעילות ($ACTIVITY\_PARAMS$)</h4>', unsafe_allow_html=True)
+        st.markdown('<div style="color:#00ff7f; font-weight:bold;">פרטי פעילות ($ACTIVITY\_PARAMS$)</div>', unsafe_allow_html=True)
         col6, col7, col8, col9, col10 = st.columns([1, 2, 2, 2, 1])
 
         with col6:
@@ -378,7 +377,7 @@ def attendance_form_tab():
                     'date': date.isoformat(),
                     'start': start_time.strftime('%H:%M'),
                     'end': end_time.strftime('%H:%M'),
-                    'hours': calc_hours(start_time, end_time),
+                    'hours': st.session_state.hours_calculated,
                     'type': activity_type,
                     'municipality': municipality,
                     'location': location.strip(),
@@ -394,61 +393,50 @@ def attendance_form_tab():
                 st.session_state.records_df = pd.concat([df, new_df], ignore_index=True)
                 save_data(st.session_state.records_df, RECORDS_FILE)
                 st.success(f"✅ [ACCESS GRANTED] הרשומה נשמרה בהצלחה. סה\"כ שעות: {new_record['hours']}")
-                st.session_state.form_data = {} # ניקוי נתוני השעות המחושבות
-                # st.rerun() # אין צורך ב-rerun כי הטופס מתנקה אוטומטית
-
+                st.session_state.hours_calculated = calc_hours(datetime.now().time(), datetime.now().time()) # איפוס
+                
 def data_grid_tab():
     """דוחות וטבלת סינון (Read & Filter)."""
     st.subheader("דוח נוכחות: גריד נתונים ($DATA\_GRID$)")
 
-    # ניהול מצב המסננים
+    # --- סינון קומפקטי ---
     if 'filters' not in st.session_state:
-        st.session_state.filters = {}
+        st.session_state.filters = {'from_date': None, 'to_date': None, 'type': 'הכל', 'municipality': 'הכל', 'program': 'הכל', 'emp': 'הכל'}
 
-    # יצירת המסננים ב-3 עמודות
-    with st.container():
-        col_f1, col_f2, col_f3 = st.columns(3)
-        
-        with col_f1:
-            st.date_input("מתאריך", key='from_date', value=None, on_change=lambda: st.session_state.filters.update({'from_date': st.session_state.from_date}))
-            st.date_input("עד תאריך", key='to_date', value=None, on_change=lambda: st.session_state.filters.update({'to_date': st.session_state.to_date}))
-        
-        with col_f2:
-            st.selectbox("סוג פעילות", ['הכל'] + ACTIVITY_TYPES, key='type_filter', on_change=lambda: st.session_state.filters.update({'type': st.session_state.type_filter}))
-            st.selectbox("רשות", ['הכל'] + MUNICIPALITIES, key='municipality_filter', on_change=lambda: st.session_state.filters.update({'municipality': st.session_state.municipality_filter}))
+    col_filter1, col_filter2, col_filter3, col_filter4 = st.columns([1, 1, 1, 1])
 
-        with col_f3:
-            st.selectbox("תוכנית", ['הכל'] + PROGRAMS, key='program_filter', on_change=lambda: st.session_state.filters.update({'program': st.session_state.program_filter}))
-            
-            # סינון מדריך (רק למנהל/אדמין)
-            if st.session_state.user_role in ['admin', 'manager']:
-                emp_list = ['הכל'] + st.session_state.users_df['empNumber'].tolist()
-                st.selectbox("מדריך", emp_list, key='emp_filter', on_change=lambda: st.session_state.filters.update({'emp': st.session_state.emp_filter}))
-            else:
-                st.session_state.filters.pop('emp', None)
+    with col_filter1:
+        st.date_input("מתאריך", value=st.session_state.filters['from_date'], key='from_date_filter', on_change=lambda: st.session_state.filters.update({'from_date': st.session_state.from_date_filter}))
+        st.date_input("עד תאריך", value=st.session_state.filters['to_date'], key='to_date_filter', on_change=lambda: st.session_state.filters.update({'to_date': st.session_state.to_date_filter}))
 
-        if st.button("נקה מסננים", key='clear_filters', type='secondary'):
-            st.session_state.filters = {}
-            st.session_state.from_date = None
-            st.session_state.to_date = None
-            st.session_state.type_filter = 'הכל'
-            st.session_state.municipality_filter = 'הכל'
-            st.session_state.program_filter = 'הכל'
-            if 'emp_filter' in st.session_state: st.session_state.emp_filter = 'הכל'
+    with col_filter2:
+        st.selectbox("סוג פעילות", ['הכל'] + ACTIVITY_TYPES, index=(['הכל'] + ACTIVITY_TYPES).index(st.session_state.filters['type']), key='type_filter', on_change=lambda: st.session_state.filters.update({'type': st.session_state.type_filter}))
+        st.selectbox("רשות", ['הכל'] + MUNICIPALITIES, index=(['הכל'] + MUNICIPALITIES).index(st.session_state.filters['municipality']), key='municipality_filter', on_change=lambda: st.session_state.filters.update({'municipality': st.session_state.municipality_filter}))
+
+    with col_filter3:
+        st.selectbox("תוכנית", ['הכל'] + PROGRAMS, index=(['הכל'] + PROGRAMS).index(st.session_state.filters['program']), key='program_filter', on_change=lambda: st.session_state.filters.update({'program': st.session_state.program_filter}))
+
+        # סינון מדריך (רק למנהל/אדמין)
+        if st.session_state.user_role in ['admin', 'manager']:
+            emp_list = ['הכל'] + st.session_state.users_df['empNumber'].tolist()
+            st.selectbox("מדריך", emp_list, index=emp_list.index(st.session_state.filters['emp']), key='emp_filter', on_change=lambda: st.session_state.filters.update({'emp': st.session_state.emp_filter}))
+        else:
+            st.session_state.filters.pop('emp', None)
+    
+    with col_filter4:
+        st.markdown("<br>", unsafe_allow_html=True) # רווח עליון
+        if st.button("נקה מסננים", key='clear_filters', type='secondary', use_container_width=True):
+            st.session_state.filters = {'from_date': None, 'to_date': None, 'type': 'הכל', 'municipality': 'הכל', 'program': 'הכל', 'emp': 'הכל'}
             st.rerun()
 
     # החלת סינון וחישוב נתונים מסוננים
     filtered_df = get_filtered_records(st.session_state.records_df, st.session_state.filters)
-    
-    # שמירת הנתונים המסוננים למצב ה-session לצורך ייצוא
     st.session_state.last_rendered_df = filtered_df
     
     if filtered_df.empty:
         st.info("⚡ [STANDBY MODE] לא נמצאו רשומות תואמות למסננים.")
     else:
-        st.markdown("---")
-        
-        # חישוב סיכומים
+        # --- סיכומים ---
         total_hours_str = filtered_df['hours'].str.split(':').apply(lambda x: int(x[0])*60 + int(x[1])).sum()
         total_hours_formatted = f"{int(total_hours_str // 60):02d}:{int(total_hours_str % 60):02d}"
         total_km = filtered_df['km'].sum()
@@ -460,14 +448,8 @@ def data_grid_tab():
             st.markdown(f"**סה״כ ק״מ:** <span style='color:#00ffff; font-size:1.2em;'>{total_km:.1f}</span>", unsafe_allow_html=True)
 
         # טבלת נתונים
-        columns_display = ['date', 'start', 'end', 'hours', 'type', 'municipality', 'location', 'program', 'meetingNumber', 'km', 'notes']
-        column_order = ['empName', 'empNumber'] + columns_display
+        column_order = ['empName', 'empNumber', 'date', 'start', 'end', 'hours', 'type', 'municipality', 'location', 'program', 'meetingNumber', 'km', 'notes']
         
-        # הצגת כפתורי פעולות בכמות גדולה
-        with st.expander("פעולות בכמות גדולה ($BULK\_ACTIONS$)", expanded=False):
-            st.warning("⚠️ פונקציונליות מחיקה ושכפול גורפת אינה זמינה כרגע בגרסת Streamlit זו (נדרשת טבלת עריכה מורכבת).")
-            # אם היינו משתמשים ב-st.experimental_data_editor היינו יכולים להוסיף פעולות אלה.
-
         st.dataframe(filtered_df[column_order], use_container_width=True, hide_index=True,
                      column_names={
                          'empName': 'שם עובד', 'empNumber': 'מס׳ עובד', 'date': 'תאריך', 'start': 'התחלה', 
@@ -477,70 +459,73 @@ def data_grid_tab():
                      })
 
 
+def to_excel(df, opts):
+    """המרת DataFrame ל-Bytes (Excel) כולל עמודות סיכום וכותרות."""
+    output = BytesIO()
+    writer = pd.ExcelWriter(output, engine='xlsxwriter')
+    
+    keys = ['empNumber', 'empName', 'date', 'start', 'end', 'hours', 'type', 'municipality', 'location', 'program', 'meetingNumber', 'km', 'notes']
+    headers_heb = ['מס׳ עובד', 'שם עובד', 'תאריך', 'התחלה', 'סיום', 'שעות', 'סוג פעילות', 'רשות', 'מיקום', 'תוכנית', 'מס׳ מפגש', 'ק״מ', 'הערות']
+    
+    if opts.get('include_id'):
+        keys.insert(0, 'id')
+        headers_heb.insert(0, 'מזהה')
+
+    df_export = df.copy()
+    df_export = df_export[keys] # סידור עמודות לפי המפתחות
+    if opts.get('heb_headers'):
+        df_export.columns = headers_heb # שינוי כותרות
+    
+    df_export.to_excel(writer, sheet_name='Attendance', index=False, header=True)
+    
+    # הוספת שורת סיכום
+    workbook  = writer.book
+    worksheet = writer.sheets['Attendance']
+    
+    total_hours_str = df['hours'].str.split(':').apply(lambda x: int(x[0])*60 + int(x[1])).sum()
+    total_hours_formatted = f"{int(total_hours_str // 60):02d}:{int(total_hours_str % 60):02d}"
+    total_km = df['km'].sum()
+
+    bold_format = workbook.add_format({'bold': True, 'align': 'right', 'right_to_left': True})
+    
+    last_row = len(df_export) + 1
+    
+    # כתיבת הסיכום בשורה האחרונה
+    if 'שעות' in headers_heb:
+        col_h = headers_heb.index('שעות')
+        worksheet.write(last_row, col_h, f'סה״כ שעות: {total_hours_formatted}', bold_format)
+    if 'ק״מ' in headers_heb:
+        col_km = headers_heb.index('ק״מ')
+        worksheet.write(last_row, col_km, f'סה״כ ק״מ: {total_km:.1f}', bold_format)
+
+    writer.close()
+    return output.getvalue()
+
+
 def export_tab():
     """ממשק ייצוא נתונים (Export)."""
     st.subheader("ייצוא נתונים ($DATA\_EXFILTRATION$)")
     
-    col_opt, col_filtered, col_monthly = st.columns(3)
-    
-    # --- העדפות ייצוא ---
-    with col_opt:
-        st.markdown('<h4 style="color:#00ff7f;">העדפות ייצוא ($OPTIONS$)</h4>', unsafe_allow_html=True)
-        heb_headers = st.checkbox("כותרות עמודות בעברית", value=True)
-        include_id = st.checkbox("כלול מזהה פנימי (id)", value=False)
-        st.caption("אפשרויות אלה חלות על כל הייצוא.")
-    
+    # --- הגדרות ---
+    with st.container():
+        st.markdown('<div style="color:#00ff7f; font-weight:bold;">העדפות ייצוא ($OPTIONS$)</div>', unsafe_allow_html=True)
+        col_opt1, col_opt2 = st.columns(2)
+        with col_opt1:
+            heb_headers = st.checkbox("כותרות עמודות בעברית", value=True, key='opt_heb')
+        with col_opt2:
+            include_id = st.checkbox("כלול מזהה פנימי (id)", value=False, key='opt_id')
+
+    st.markdown("---")
+
+    col_filtered, col_monthly = st.columns(2)
+
     # --- ייצוא מסונן ---
     with col_filtered:
-        st.markdown('<h4 style="color:#00ff7f;">ייצוא לפי המסננים הנוכחיים ($GRID\_VIEW$)</h4>', unsafe_allow_html=True)
-        
-        @st.cache_data
-        def to_excel(df, opts):
-            """המרת DataFrame ל-Bytes (Excel) כולל עמודות סיכום וכותרות."""
-            output = BytesIO()
-            writer = pd.ExcelWriter(output, engine='xlsxwriter')
-            
-            # הכנת נתונים
-            keys = ['empNumber', 'empName', 'date', 'start', 'end', 'hours', 'type', 'municipality', 'location', 'program', 'meetingNumber', 'km', 'notes']
-            headers_heb = ['מס׳ עובד', 'שם עובד', 'תאריך', 'התחלה', 'סיום', 'שעות', 'סוג פעילות', 'רשות', 'מיקום', 'תוכנית', 'מס׳ מפגש', 'ק״מ', 'הערות']
-            
-            if opts['include_id']:
-                keys.insert(0, 'id')
-                headers_heb.insert(0, 'מזהה')
-
-            df_export = df.copy()
-            df_export = df_export.rename(columns=dict(zip(keys, headers_heb)))
-            df_export = df_export[headers_heb] # סידור עמודות
-
-            df_export.to_excel(writer, sheet_name='Attendance', index=False, header=True)
-            
-            # הוספת שורת סיכום
-            workbook  = writer.book
-            worksheet = writer.sheets['Attendance']
-            
-            # חישוב סיכומים
-            total_hours_str = df['hours'].str.split(':').apply(lambda x: int(x[0])*60 + int(x[1])).sum()
-            total_hours_formatted = f"{int(total_hours_str // 60):02d}:{int(total_hours_str % 60):02d}"
-            total_km = df['km'].sum()
-
-            # פורמט טקסט
-            bold_format = workbook.add_format({'bold': True, 'align': 'right', 'right_to_left': True})
-            
-            # כתיבת הסיכום בשורה האחרונה
-            last_row = len(df_export) + 1
-            if 'שעות' in headers_heb:
-                col_h = headers_heb.index('שעות')
-                worksheet.write(last_row, col_h, f'סה״כ שעות: {total_hours_formatted}', bold_format)
-            if 'ק״מ' in headers_heb:
-                col_km = headers_heb.index('ק״מ')
-                worksheet.write(last_row, col_km, f'סה״כ ק״מ: {total_km:.1f}', bold_format)
-
-            writer.close()
-            return output.getvalue()
+        st.markdown('<div style="color:#00ff7f; font-weight:bold;">ייצוא לפי המסננים הנוכחיים ($GRID\_VIEW$)</div>', unsafe_allow_html=True)
         
         if 'last_rendered_df' in st.session_state and not st.session_state.last_rendered_df.empty:
             df_to_export = st.session_state.last_rendered_df
-            excel_data = to_excel(df_to_export, {'include_id': include_id})
+            excel_data = to_excel(df_to_export, {'include_id': include_id, 'heb_headers': heb_headers})
             
             st.download_button(
                 label="ייצוא XLSX ($BINARY$)",
@@ -554,13 +539,13 @@ def export_tab():
 
     # --- ייצוא חודשי ---
     with col_monthly:
-        st.markdown('<h4 style="color:#00ff7f;">ייצוא חודשי ($MONTHLY\_REPORT$)</h4>', unsafe_allow_html=True)
-        month_input = st.date_input("בחר חודש לייצוא", value=datetime.today(), format="MM/YYYY")
+        st.markdown('<div style="color:#00ff7f; font-weight:bold;">ייצוא חודשי ($MONTHLY\_REPORT$)</div>', unsafe_allow_html=True)
+        month_input = st.date_input("בחר חודש לייצוא", value=datetime.today(), format="MM/YYYY", key='export_month_picker')
 
         if month_input:
             export_month = month_input.strftime('%Y-%m')
             
-            # סינון רקורדים לחודש הנבחר ולמשתמש הנוכחי
+            # סינון רקורדים לחודש הנבחר
             monthly_df = st.session_state.records_df[
                 (st.session_state.records_df['date'].str.startswith(export_month))
             ].copy()
@@ -570,7 +555,7 @@ def export_tab():
                 monthly_df = monthly_df[monthly_df['empNumber'] == st.session_state.emp_number]
 
             if not monthly_df.empty:
-                excel_data_monthly = to_excel(monthly_df, {'include_id': include_id})
+                excel_data_monthly = to_excel(monthly_df, {'include_id': include_id, 'heb_headers': heb_headers})
                 
                 emp_prefix = st.session_state.emp_number
                 filename = f"תעשיידע_{emp_prefix}_{export_month}_נוכחות.xlsx"
@@ -589,7 +574,6 @@ def admin_users_tab():
     """טבלת ניהול משתמשים (Admin Only)."""
     st.subheader("ניהול משתמשים ($USER\_MATRIX$)")
     
-    # הצגת טבלת המשתמשים
     users_display_df = st.session_state.users_df.copy()
     users_display_df['pin_masked'] = users_display_df['pin'].apply(lambda x: '•' * len(str(x)))
     users_display_df['role_heb'] = users_display_df['role'].map(ROLES)
@@ -598,20 +582,14 @@ def admin_users_tab():
                  use_container_width=True, hide_index=True,
                  column_names={'name': 'שם', 'empNumber': 'מס׳ עובד', 'role_heb': 'תפקיד', 'pin_masked': 'PIN'})
 
-    # פונקציית עדכון משתמשים פשוטה
     st.info("⚠️ בגרסה זו, ניהול המשתמשים הוא להצגה בלבד. יש לערוך את הקובץ users_data.xlsx ישירות להוספה/מחיקה.")
 
 # ==================================================
 # ==== [MAIN_EXECUTION] ====
 # ==================================================
 
-# אתחול נתונים ו-session state
+# אתחול נתונים
 init_data()
-
-# הגדרת מצב כניסה ראשוני
-if 'logged_in' not in st.session_state:
-    st.session_state.logged_in = False
-    st.session_state.emp_number = None
 
 # ניתוב תצוגה
 if st.session_state.logged_in:
